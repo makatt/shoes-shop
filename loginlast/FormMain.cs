@@ -140,7 +140,7 @@ namespace loginlast
                 if (stock == 0)
                     row.DefaultCellStyle.BackColor = Color.LightBlue;
                 else if (discount >= 15)
-                    row.DefaultCellStyle.BackColor = Color.LightGreen;
+                    row.DefaultCellStyle.BackColor = ColorTranslator.FromHtml("#2E8B57");
             }
         }
 
