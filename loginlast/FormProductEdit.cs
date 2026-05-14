@@ -1,6 +1,8 @@
 ﻿using Npgsql;
 using System;
 using System.Data;
+using System.Drawing;
+using System.IO;
 using System.Windows.Forms;
 
 namespace loginlast
@@ -8,6 +10,7 @@ namespace loginlast
     public partial class FormProductEdit : Form
     {
         private string originalArticle = null;
+        private string currentPhotoFileName = null;
 
         public FormProductEdit()
         {
@@ -68,16 +71,9 @@ namespace loginlast
                 conn.Open();
                 string query = @"
                     SELECT 
-                        p.productarticlenumber, 
-                        pn.name, 
-                        p.productcategory, 
-                        p.productmanufacturer, 
-                        p.productsupplier,
-                        p.productcost,
-                        p.productdiscountamount,
-                        p.productquantityinStock,
-                        p.productdescription,
-                        p.unitofmeasurement
+                        p.productarticlenumber, pn.name, p.productcategory, p.productmanufacturer, 
+                        p.productsupplier, p.productcost, p.productdiscountamount, 
+                        p.productquantityinStock, p.productdescription, p.unitofmeasurement, p.productphoto
                     FROM ""OBYV"".""product"" p
                     LEFT JOIN ""OBYV"".""product_names"" pn ON p.productname = pn.nameid
                     WHERE p.productarticlenumber = @article";
@@ -104,6 +100,9 @@ namespace loginlast
                             txtDescription.Text = reader.IsDBNull(8) ? "" : reader.GetString(8);
                             cmbUnit.Text = reader.IsDBNull(9) ? "шт" : reader.GetString(9);
 
+                            currentPhotoFileName = reader.IsDBNull(10) ? null : reader.GetString(10);
+                            LoadCurrentPhoto();
+
                             txtArticle.ReadOnly = true;
                         }
                     }
@@ -111,11 +110,115 @@ namespace loginlast
             }
         }
 
-        private void btnSave_Click(object sender, EventArgs e)
+        private void LoadCurrentPhoto()
         {
+            if (string.IsNullOrEmpty(currentPhotoFileName))
+            {
+                pbPhoto.Image = null;
+                return;
+            }
+
+            string imagePath = Path.Combine(Application.StartupPath, "images", currentPhotoFileName);
+            if (File.Exists(imagePath))
+                try { pbPhoto.Image = Image.FromFile(imagePath); } catch { }
+        }
+
+        private void btnLoadPhoto_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog ofd = new OpenFileDialog())
+            {
+                ofd.Filter = "Изображения|*.jpg;*.jpeg;*.png;*.bmp";
+                if (ofd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        string ext = Path.GetExtension(ofd.FileName).ToLower();
+                        string newFileName = txtArticle.Text.Trim() + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ext;
+
+                        string targetPath = Path.Combine(Application.StartupPath, "images", newFileName);
+                        Directory.CreateDirectory(Path.Combine(Application.StartupPath, "images"));
+
+                        File.Copy(ofd.FileName, targetPath, true);
+
+                        currentPhotoFileName = newFileName;
+                        pbPhoto.Image = Image.FromFile(targetPath);
+
+                        MessageBox.Show("Фото успешно загружено!", "Успех");
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Ошибка загрузки фото:\n" + ex.Message, "Ошибка");
+                    }
+                }
+            }
+        }
+
+        // ==================== ВАЛИДАЦИЯ ====================
+        private bool ValidateInput()
+        {
+            // Обязательные поля
             if (string.IsNullOrWhiteSpace(txtArticle.Text) || string.IsNullOrWhiteSpace(txtName.Text))
             {
                 MessageBox.Show("Артикул и Название — обязательные поля!", "Ошибка");
+                return false;
+            }
+
+            // Цена > 0
+            if (!decimal.TryParse(txtPrice.Text, out decimal price) || price <= 0)
+            {
+                MessageBox.Show("Цена должна быть больше 0!", "Ошибка");
+                txtPrice.Focus();
+                return false;
+            }
+
+            // Количество >= 0
+            if (!int.TryParse(txtStock.Text, out int stock) || stock < 0)
+            {
+                MessageBox.Show("Количество на складе не может быть отрицательным!", "Ошибка");
+                txtStock.Focus();
+                return false;
+            }
+
+            // Скидка (0-100)
+            if (!int.TryParse(txtDiscount.Text, out int discount) || discount < 0 || discount > 100)
+            {
+                MessageBox.Show("Скидка должна быть от 0 до 100%", "Ошибка");
+                txtDiscount.Focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        private bool IsArticleUnique(string article)
+        {
+            if (originalArticle == article) return true; // при редактировании
+
+            string connStr = "host=localhost;port=5432;username=postgres;password=navatak_21;database=postgres";
+
+            using (var conn = new NpgsqlConnection(connStr))
+            {
+                conn.Open();
+                string query = @"SELECT COUNT(*) FROM ""OBYV"".""product"" WHERE productarticlenumber = @article";
+                using (var cmd = new NpgsqlCommand(query, conn))
+                {
+                    cmd.Parameters.AddWithValue("article", article);
+                    int count = Convert.ToInt32(cmd.ExecuteScalar());
+                    return count == 0;
+                }
+            }
+        }
+
+        private void btnSave_Click(object sender, EventArgs e)
+        {
+            if (!ValidateInput())
+                return;
+
+            // Проверка уникальности артикула при добавлении
+            if (originalArticle == null && !IsArticleUnique(txtArticle.Text.Trim()))
+            {
+                MessageBox.Show("Товар с таким артикулом уже существует!", "Ошибка");
+                txtArticle.Focus();
                 return;
             }
 
@@ -128,16 +231,15 @@ namespace loginlast
                     conn.Open();
                     int nameId = GetOrCreateProductName(conn, txtName.Text);
 
-                    if (originalArticle == null) // Добавление нового товара
+                    if (originalArticle == null) // Добавление
                     {
                         string sql = @"
-                    INSERT INTO ""OBYV"".""product"" 
-                    (productarticlenumber, productname, productcategory, productmanufacturer, 
-                     productsupplier, productcost, productdiscountamount, 
-                     productquantityinStock, productdescription, unitofmeasurement)
-                    VALUES 
-                    (@article, @nameid, @cat, @manuf, @sup, @price, @discount, 
-                     @stock, @desc, @unit)";
+                            INSERT INTO ""OBYV"".""product"" 
+                            (productarticlenumber, productname, productcategory, productmanufacturer, 
+                             productsupplier, productcost, productdiscountamount, 
+                             productquantityinStock, productdescription, unitofmeasurement, productphoto)
+                            VALUES (@article, @nameid, @cat, @manuf, @sup, @price, @discount, 
+                                    @stock, @desc, @unit, @photo)";
 
                         using (var cmd = new NpgsqlCommand(sql, conn))
                         {
@@ -150,17 +252,18 @@ namespace loginlast
                     else // Редактирование
                     {
                         string sql = @"
-                    UPDATE ""OBYV"".""product"" SET 
-                        productname = @nameid,
-                        productcategory = @cat,
-                        productmanufacturer = @manuf,
-                        productsupplier = @sup,
-                        productcost = @price,
-                        productdiscountamount = @discount,
-                        productquantityinStock = @stock,
-                        productdescription = @desc,
-                        unitofmeasurement = @unit
-                    WHERE productarticlenumber = @article";
+                            UPDATE ""OBYV"".""product"" SET 
+                                productname = @nameid,
+                                productcategory = @cat,
+                                productmanufacturer = @manuf,
+                                productsupplier = @sup,
+                                productcost = @price,
+                                productdiscountamount = @discount,
+                                productquantityinStock = @stock,
+                                productdescription = @desc,
+                                unitofmeasurement = @unit,
+                                productphoto = @photo
+                            WHERE productarticlenumber = @article";
 
                         using (var cmd = new NpgsqlCommand(sql, conn))
                         {
@@ -177,14 +280,13 @@ namespace loginlast
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка сохранения:\n" + ex.Message, "Ошибка",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Ошибка сохранения:\n" + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private void FillProductParameters(NpgsqlCommand cmd, int nameId)
         {
-            cmd.Parameters.AddWithValue("article", txtArticle.Text.Trim());   // ← Это было главной ошибкой
+            cmd.Parameters.AddWithValue("article", txtArticle.Text.Trim());
             cmd.Parameters.AddWithValue("nameid", nameId);
             cmd.Parameters.AddWithValue("cat", cmbCategory.SelectedValue ?? (object)DBNull.Value);
             cmd.Parameters.AddWithValue("manuf", cmbManufacturer.SelectedValue ?? (object)DBNull.Value);
@@ -198,7 +300,9 @@ namespace loginlast
             else
                 cmd.Parameters.AddWithValue("desc", txtDescription.Text);
 
+
             cmd.Parameters.AddWithValue("unit", cmbUnit.Text);
+            cmd.Parameters.AddWithValue("photo", (object)currentPhotoFileName ?? DBNull.Value);
         }
 
         private int GetOrCreateProductName(NpgsqlConnection conn, string name)

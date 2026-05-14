@@ -2,15 +2,8 @@
 {
     partial class FormProductEdit
     {
-        /// <summary>
-        /// Обязательная переменная конструктора.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Освободить все используемые ресурсы.
-        /// </summary>
-        /// <param name="disposing">истинно, если управляемый ресурс должен быть удален; иначе ложно.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,10 +15,6 @@
 
         #region Код, автоматически созданный конструктором форм Windows
 
-        /// <summary>
-        /// Требуемый метод для поддержки конструктора — не изменяйте 
-        /// содержимое этого метода с помощью редактора кода.
-        /// </summary>
         private void InitializeComponent()
         {
             this.lblArticle = new System.Windows.Forms.Label();
@@ -50,7 +39,14 @@
             this.cmbUnit = new System.Windows.Forms.ComboBox();
             this.btnSave = new System.Windows.Forms.Button();
             this.btnCancel = new System.Windows.Forms.Button();
+
+            // === Новые элементы для фото ===
+            this.lblPhoto = new System.Windows.Forms.Label();
+            this.pbPhoto = new System.Windows.Forms.PictureBox();
+            this.btnLoadPhoto = new System.Windows.Forms.Button();
+
             this.SuspendLayout();
+
             // 
             // lblArticle
             // 
@@ -84,168 +80,177 @@
             this.txtName.Size = new System.Drawing.Size(350, 20);
             this.txtName.TabIndex = 3;
             // 
-            // lblCategory
-            // 
+            // lblCategory ... (оставляем без изменений)
             this.lblCategory.AutoSize = true;
             this.lblCategory.Location = new System.Drawing.Point(30, 100);
             this.lblCategory.Name = "lblCategory";
             this.lblCategory.Size = new System.Drawing.Size(65, 13);
             this.lblCategory.TabIndex = 4;
             this.lblCategory.Text = "Категория:";
-            // 
-            // cmbCategory
-            // 
+
             this.cmbCategory.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbCategory.FormattingEnabled = true;
             this.cmbCategory.Location = new System.Drawing.Point(160, 97);
             this.cmbCategory.Name = "cmbCategory";
             this.cmbCategory.Size = new System.Drawing.Size(250, 21);
             this.cmbCategory.TabIndex = 5;
-            // 
-            // lblManufacturer
-            // 
+
+            // lblManufacturer, cmbManufacturer, lblSupplier, cmbSupplier, lblPrice и т.д.
+            // (оставляем как было)
             this.lblManufacturer.AutoSize = true;
             this.lblManufacturer.Location = new System.Drawing.Point(30, 135);
             this.lblManufacturer.Name = "lblManufacturer";
             this.lblManufacturer.Size = new System.Drawing.Size(85, 13);
             this.lblManufacturer.TabIndex = 6;
             this.lblManufacturer.Text = "Производитель:";
-            // 
-            // cmbManufacturer
-            // 
+
             this.cmbManufacturer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbManufacturer.FormattingEnabled = true;
             this.cmbManufacturer.Location = new System.Drawing.Point(160, 132);
             this.cmbManufacturer.Name = "cmbManufacturer";
             this.cmbManufacturer.Size = new System.Drawing.Size(250, 21);
             this.cmbManufacturer.TabIndex = 7;
-            // 
-            // lblSupplier
-            // 
+
             this.lblSupplier.AutoSize = true;
             this.lblSupplier.Location = new System.Drawing.Point(30, 170);
             this.lblSupplier.Name = "lblSupplier";
             this.lblSupplier.Size = new System.Drawing.Size(65, 13);
             this.lblSupplier.TabIndex = 8;
             this.lblSupplier.Text = "Поставщик:";
-            // 
-            // cmbSupplier
-            // 
+
             this.cmbSupplier.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbSupplier.FormattingEnabled = true;
             this.cmbSupplier.Location = new System.Drawing.Point(160, 167);
             this.cmbSupplier.Name = "cmbSupplier";
             this.cmbSupplier.Size = new System.Drawing.Size(250, 21);
             this.cmbSupplier.TabIndex = 9;
-            // 
-            // lblPrice
-            // 
+
             this.lblPrice.AutoSize = true;
             this.lblPrice.Location = new System.Drawing.Point(30, 205);
             this.lblPrice.Name = "lblPrice";
             this.lblPrice.Size = new System.Drawing.Size(38, 13);
             this.lblPrice.TabIndex = 10;
             this.lblPrice.Text = "Цена:";
-            // 
-            // txtPrice
-            // 
+
             this.txtPrice.Location = new System.Drawing.Point(160, 202);
             this.txtPrice.Name = "txtPrice";
             this.txtPrice.Size = new System.Drawing.Size(120, 20);
             this.txtPrice.TabIndex = 11;
-            // 
-            // lblDiscount
-            // 
+
             this.lblDiscount.AutoSize = true;
             this.lblDiscount.Location = new System.Drawing.Point(30, 240);
             this.lblDiscount.Name = "lblDiscount";
             this.lblDiscount.Size = new System.Drawing.Size(70, 13);
             this.lblDiscount.TabIndex = 12;
             this.lblDiscount.Text = "Скидка (%):";
-            // 
-            // txtDiscount
-            // 
+
             this.txtDiscount.Location = new System.Drawing.Point(160, 237);
             this.txtDiscount.Name = "txtDiscount";
             this.txtDiscount.Size = new System.Drawing.Size(120, 20);
             this.txtDiscount.TabIndex = 13;
-            // 
-            // lblStock
-            // 
+
             this.lblStock.AutoSize = true;
             this.lblStock.Location = new System.Drawing.Point(30, 275);
             this.lblStock.Name = "lblStock";
             this.lblStock.Size = new System.Drawing.Size(68, 13);
             this.lblStock.TabIndex = 14;
             this.lblStock.Text = "На складе:";
-            // 
-            // txtStock
-            // 
+
             this.txtStock.Location = new System.Drawing.Point(160, 272);
             this.txtStock.Name = "txtStock";
             this.txtStock.Size = new System.Drawing.Size(120, 20);
             this.txtStock.TabIndex = 15;
-            // 
-            // lblDescription
-            // 
+
             this.lblDescription.AutoSize = true;
             this.lblDescription.Location = new System.Drawing.Point(30, 310);
             this.lblDescription.Name = "lblDescription";
             this.lblDescription.Size = new System.Drawing.Size(65, 13);
             this.lblDescription.TabIndex = 16;
             this.lblDescription.Text = "Описание:";
-            // 
-            // txtDescription
-            // 
+
             this.txtDescription.Location = new System.Drawing.Point(160, 307);
             this.txtDescription.Multiline = true;
             this.txtDescription.Name = "txtDescription";
             this.txtDescription.Size = new System.Drawing.Size(350, 60);
             this.txtDescription.TabIndex = 17;
-            // 
-            // lblUnit
-            // 
+
             this.lblUnit.AutoSize = true;
             this.lblUnit.Location = new System.Drawing.Point(30, 380);
             this.lblUnit.Name = "lblUnit";
             this.lblUnit.Size = new System.Drawing.Size(105, 13);
             this.lblUnit.TabIndex = 18;
             this.lblUnit.Text = "Единица измерения:";
-            // 
-            // cmbUnit
-            // 
+
             this.cmbUnit.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
-            this.cmbUnit.FormattingEnabled = true;
             this.cmbUnit.Location = new System.Drawing.Point(160, 377);
             this.cmbUnit.Name = "cmbUnit";
             this.cmbUnit.Size = new System.Drawing.Size(120, 21);
             this.cmbUnit.TabIndex = 19;
+
+            // ==================== НОВЫЕ ЭЛЕМЕНТЫ ДЛЯ ФОТО ====================
+            // 
+            // lblPhoto
+            // 
+            this.lblPhoto.AutoSize = true;
+            this.lblPhoto.Location = new System.Drawing.Point(30, 415);
+            this.lblPhoto.Name = "lblPhoto";
+            this.lblPhoto.Size = new System.Drawing.Size(80, 13);
+            this.lblPhoto.TabIndex = 20;
+            this.lblPhoto.Text = "Фото товара:";
+            // 
+            // pbPhoto
+            // 
+            this.pbPhoto.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pbPhoto.Location = new System.Drawing.Point(160, 410);
+            this.pbPhoto.Name = "pbPhoto";
+            this.pbPhoto.Size = new System.Drawing.Size(120, 120);
+            this.pbPhoto.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
+            this.pbPhoto.TabIndex = 21;
+            this.pbPhoto.TabStop = false;
+            // 
+            // btnLoadPhoto
+            // 
+            this.btnLoadPhoto.Location = new System.Drawing.Point(290, 410);
+            this.btnLoadPhoto.Name = "btnLoadPhoto";
+            this.btnLoadPhoto.Size = new System.Drawing.Size(130, 30);
+            this.btnLoadPhoto.TabIndex = 22;
+            this.btnLoadPhoto.Text = "Загрузить фото";
+            this.btnLoadPhoto.UseVisualStyleBackColor = true;
+            this.btnLoadPhoto.Click += new System.EventHandler(this.btnLoadPhoto_Click);
             // 
             // btnSave
             // 
-            this.btnSave.Location = new System.Drawing.Point(160, 420);
+            this.btnSave.Location = new System.Drawing.Point(160, 545);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(110, 35);
-            this.btnSave.TabIndex = 20;
+            this.btnSave.TabIndex = 23;
             this.btnSave.Text = "Сохранить";
             this.btnSave.UseVisualStyleBackColor = true;
             this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
             // 
             // btnCancel
             // 
-            this.btnCancel.Location = new System.Drawing.Point(280, 420);
+            this.btnCancel.Location = new System.Drawing.Point(280, 545);
             this.btnCancel.Name = "btnCancel";
             this.btnCancel.Size = new System.Drawing.Size(110, 35);
-            this.btnCancel.TabIndex = 21;
+            this.btnCancel.TabIndex = 24;
             this.btnCancel.Text = "Отмена";
             this.btnCancel.UseVisualStyleBackColor = true;
             this.btnCancel.Click += new System.EventHandler(this.btnCancel_Click);
+
             // 
             // FormProductEdit
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(530, 470);
+            this.ClientSize = new System.Drawing.Size(530, 600);   // Увеличена высота
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
+            this.MaximizeBox = false;
+            this.MinimizeBox = false;
+            this.Name = "FormProductEdit";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
+            this.Text = "Добавление товара";
+
+            this.Controls.Add(this.lblPhoto);
+            this.Controls.Add(this.pbPhoto);
+            this.Controls.Add(this.btnLoadPhoto);
             this.Controls.Add(this.lblUnit);
             this.Controls.Add(this.cmbUnit);
             this.Controls.Add(this.lblDescription);
@@ -268,20 +273,15 @@
             this.Controls.Add(this.txtArticle);
             this.Controls.Add(this.btnSave);
             this.Controls.Add(this.btnCancel);
-            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
-            this.MaximizeBox = false;
-            this.MinimizeBox = false;
-            this.Name = "FormProductEdit";
-            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
-            this.Text = "Добавление товара";
+
             this.Load += new System.EventHandler(this.FormProductEdit_Load);
             this.ResumeLayout(false);
             this.PerformLayout();
-
         }
 
         #endregion
 
+        // Старые элементы
         private System.Windows.Forms.Label lblArticle;
         private System.Windows.Forms.TextBox txtArticle;
         private System.Windows.Forms.Label lblName;
@@ -304,5 +304,10 @@
         private System.Windows.Forms.ComboBox cmbUnit;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnCancel;
+
+        // Новые элементы
+        private System.Windows.Forms.Label lblPhoto;
+        private System.Windows.Forms.PictureBox pbPhoto;
+        private System.Windows.Forms.Button btnLoadPhoto;
     }
 }

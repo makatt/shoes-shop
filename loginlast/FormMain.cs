@@ -8,17 +8,38 @@ namespace loginlast
 {
     public partial class FormMain : Form
     {
+        private FlowLayoutPanel flowPanel;
+        private ProductCard selectedCard = null;
+
         public FormMain()
         {
             InitializeComponent();
+            CreateFlowPanel();
+        }
+
+        private void CreateFlowPanel()
+        {
+            flowPanel = new FlowLayoutPanel
+            {
+                Location = new Point(12, 60),
+                Size = new Size(776, 320),
+                AutoScroll = true,
+                FlowDirection = FlowDirection.TopDown,
+                WrapContents = false,
+                BackColor = Color.White,
+                Padding = new Padding(5)
+            };
+
+            this.Controls.Remove(dataGridView1);
+            this.Controls.Add(flowPanel);
         }
 
         private void FormMain_Load(object sender, EventArgs e)
         {
             LoadUserInfo();
-            LoadComboBoxes();
+            LoadComboBoxes();        // ← теперь метод существует
             LoadSortOptions();
-            loadProduct();
+            LoadProducts();
         }
 
         private void LoadUserInfo()
@@ -27,13 +48,21 @@ namespace loginlast
             if (user != null)
             {
                 lblUserInfo.Text = $"{user.FullName} ({user.Role})";
+                lblUserInfo.ForeColor = Color.DarkBlue;
 
                 bool isAdmin = user.Role == "Администратор";
-                bool isManagerOrAdmin = isAdmin || user.Role == "Менеджер";
+
+                bool canEdit = !(user.Role == "Гость" || user.Role == "Авторизированный клиент");
+
+                txtSearch.Enabled = canEdit;
+                cmbCategory.Enabled = canEdit;
+                cmbManufacture.Enabled = canEdit;
+                cmbSupplier.Enabled = canEdit;
+                cmbSort.Enabled = canEdit;
 
                 btnAdd.Visible = isAdmin;
                 btnEdit.Visible = isAdmin;
-                btnOrders.Visible = isManagerOrAdmin;
+                btnDelete.Visible = isAdmin;
             }
         }
 
@@ -47,7 +76,6 @@ namespace loginlast
         private void LoadCombo(ComboBox cmb, string table, string idField, string nameField)
         {
             string connStr = "host=localhost;port=5432;username=postgres;password=navatak_21;database=postgres";
-
             using (var conn = new NpgsqlConnection(connStr))
             {
                 conn.Open();
@@ -71,19 +99,23 @@ namespace loginlast
 
         private void LoadSortOptions()
         {
+            cmbSort.Items.Clear();
             cmbSort.Items.AddRange(new string[]
             {
                 "По умолчанию",
-                "По цене (возр.)",
-                "По цене (убыв.)",
-                "По наличию (возр.)",
-                "По наличию (убыв.)"
+                "По цене (возрастание)",
+                "По цене (убывание)",
+                "По наличию (возрастание)",
+                "По наличию (убывание)"
             });
             cmbSort.SelectedIndex = 0;
         }
 
-        private void loadProduct(string search = "")
+        private void LoadProducts(string search = "")
         {
+            flowPanel.Controls.Clear();
+            selectedCard = null;
+
             string connStr = "host=localhost;port=5432;username=postgres;password=navatak_21;database=postgres";
 
             using (var conn = new NpgsqlConnection(connStr))
@@ -99,7 +131,10 @@ namespace loginlast
                         c.categoryname AS Категория,
                         p.productcost AS Цена,
                         p.productdiscountamount AS Скидка,
-                        p.productquantityinStock AS На_складе
+                        p.productquantityinStock AS На_складе,
+                        p.unitofmeasurement AS Единица,
+                        p.productdescription,
+                        p.productphoto
                     FROM ""OBYV"".""product"" p
                     LEFT JOIN ""OBYV"".""product_names"" pn ON p.productname = pn.nameid
                     LEFT JOIN ""OBYV"".""manufacturer"" m ON p.productmanufacturer = m.manufacturerid
@@ -107,56 +142,96 @@ namespace loginlast
                     LEFT JOIN ""OBYV"".""category"" c ON p.productcategory = c.categoryid
                     WHERE 1=1";
 
-                if (!string.IsNullOrWhiteSpace(search))
-                {
+                if (!string.IsNullOrWhiteSpace(search) && txtSearch.Enabled)
                     query += " AND (pn.name ILIKE @search OR p.productarticlenumber ILIKE @search)";
-                }
 
-                query += " ORDER BY p.productarticlenumber";
+                if (cmbCategory.Enabled && cmbCategory.SelectedValue != null && cmbCategory.SelectedValue != DBNull.Value)
+                    query += " AND p.productcategory = @category";
+
+                if (cmbManufacture.Enabled && cmbManufacture.SelectedValue != null && cmbManufacture.SelectedValue != DBNull.Value)
+                    query += " AND p.productmanufacturer = @manufacture";
+
+                if (cmbSupplier.Enabled && cmbSupplier.SelectedValue != null && cmbSupplier.SelectedValue != DBNull.Value)
+                    query += " AND p.productsupplier = @supplier";
+
+                // СОРТИРОВКА
+                string orderBy = " ORDER BY p.productarticlenumber";
+                switch (cmbSort.SelectedIndex)
+                {
+                    case 1: orderBy = " ORDER BY p.productcost ASC"; break;
+                    case 2: orderBy = " ORDER BY p.productcost DESC"; break;
+                    case 3: orderBy = " ORDER BY p.productquantityinStock ASC"; break;
+                    case 4: orderBy = " ORDER BY p.productquantityinStock DESC"; break;
+                }
+                query += orderBy;
 
                 using (var da = new NpgsqlDataAdapter(query, conn))
                 {
-                    if (!string.IsNullOrWhiteSpace(search))
+                    if (!string.IsNullOrWhiteSpace(search) && txtSearch.Enabled)
                         da.SelectCommand.Parameters.AddWithValue("search", $"%{search}%");
+
+                    if (cmbCategory.Enabled && cmbCategory.SelectedValue != DBNull.Value)
+                        da.SelectCommand.Parameters.AddWithValue("category", cmbCategory.SelectedValue);
+
+                    if (cmbManufacture.Enabled && cmbManufacture.SelectedValue != DBNull.Value)
+                        da.SelectCommand.Parameters.AddWithValue("manufacture", cmbManufacture.SelectedValue);
+
+                    if (cmbSupplier.Enabled && cmbSupplier.SelectedValue != DBNull.Value)
+                        da.SelectCommand.Parameters.AddWithValue("supplier", cmbSupplier.SelectedValue);
 
                     DataTable dt = new DataTable();
                     da.Fill(dt);
-                    dataGridView1.DataSource = dt;
 
-                    ColorDataGridRows();
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        ProductCard card = new ProductCard();
+                        card.LoadData(row);
+                        card.Width = flowPanel.ClientSize.Width - 30;
+                        card.Margin = new Padding(5, 8, 5, 8);
+                        card.Clicked += Card_Clicked;
+
+                        flowPanel.Controls.Add(card);
+                    }
                 }
             }
         }
 
-        private void ColorDataGridRows()
+        private void Card_Clicked(object sender, EventArgs e)
         {
-            foreach (DataGridViewRow row in dataGridView1.Rows)
-            {
-                if (row.IsNewRow) continue;
+            if (selectedCard != null)
+                selectedCard.SelectCard(false);
 
-                int stock = Convert.ToInt32(row.Cells["На_складе"].Value ?? 0);
-                int discount = Convert.ToInt32(row.Cells["Скидка"].Value ?? 0);
+            selectedCard = sender as ProductCard;
+            if (selectedCard != null)
+                selectedCard.SelectCard(true);
+        }
 
-                if (stock == 0)
-                    row.DefaultCellStyle.BackColor = Color.LightBlue;
-                else if (discount >= 15)
-                    row.DefaultCellStyle.BackColor = ColorTranslator.FromHtml("#2E8B57");
-            }
+        // ==================== Обработчики ====================
+
+        private void cmbSort_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            LoadProducts(txtSearch.Text.Trim());
         }
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
-            loadProduct(txtSearch.Text.Trim());
+            if (txtSearch.Enabled)
+                LoadProducts(txtSearch.Text.Trim());
         }
 
         private void btnFilter_Click(object sender, EventArgs e)
         {
-            loadProduct(txtSearch.Text.Trim());
+            LoadProducts(txtSearch.Text.Trim());
         }
 
         private void btnRefresh_Click(object sender, EventArgs e)
         {
-            loadProduct(txtSearch.Text.Trim());
+            cmbCategory.SelectedIndex = 0;
+            cmbManufacture.SelectedIndex = 0;
+            cmbSupplier.SelectedIndex = 0;
+            cmbSort.SelectedIndex = 0;
+            txtSearch.Clear();
+            LoadProducts();
         }
 
         private void btnAdd_Click(object sender, EventArgs e)
@@ -164,30 +239,66 @@ namespace loginlast
             using (var form = new FormProductEdit())
             {
                 if (form.ShowDialog() == DialogResult.OK)
-                    loadProduct(txtSearch.Text.Trim());
+                    LoadProducts(txtSearch.Text.Trim());
             }
         }
 
         private void btnEdit_Click(object sender, EventArgs e)
         {
-            if (dataGridView1.CurrentRow == null)
+            if (selectedCard == null)
             {
-                MessageBox.Show("Выберите товар для редактирования", "Внимание");
+                MessageBox.Show("Выберите карточку товара для редактирования", "Внимание");
                 return;
             }
 
-            string article = dataGridView1.CurrentRow.Cells["Артикул"].Value.ToString();
-
-            using (var form = new FormProductEdit(article))
+            using (var form = new FormProductEdit(selectedCard.Article))
             {
                 if (form.ShowDialog() == DialogResult.OK)
-                    loadProduct(txtSearch.Text.Trim());
+                    LoadProducts(txtSearch.Text.Trim());
             }
         }
 
-        private void btnOrders_Click(object sender, EventArgs e)
+        private void btnDelete_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Форма заказов будет добавлена позже", "В разработке");
+            if (selectedCard == null)
+            {
+                MessageBox.Show("Выберите товар для удаления", "Внимание");
+                return;
+            }
+
+            if (MessageBox.Show($"Вы действительно хотите удалить товар\n{selectedCard.Article}?",
+                    "Подтверждение удаления",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.No)
+                return;
+
+            try
+            {
+                string connStr = "host=localhost;port=5432;username=postgres;password=navatak_21;database=postgres";
+
+                using (var conn = new NpgsqlConnection(connStr))
+                {
+                    conn.Open();
+                    string sql = @"DELETE FROM ""OBYV"".""product"" WHERE productarticlenumber = @article";
+
+                    using (var cmd = new NpgsqlCommand(sql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("article", selectedCard.Article);
+                        int rows = cmd.ExecuteNonQuery();
+
+                        if (rows > 0)
+                        {
+                            MessageBox.Show("Товар успешно удалён!", "Успех");
+                            LoadProducts(txtSearch.Text.Trim());
+                            selectedCard = null;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при удалении:\n" + ex.Message, "Ошибка",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void btnLogout_Click(object sender, EventArgs e)
@@ -197,11 +308,6 @@ namespace loginlast
                 this.Close();
                 Application.Restart();
             }
-        }
-
-        private void dataGridView1_SelectionChanged(object sender, EventArgs e)
-        {
-            btnEdit.Enabled = dataGridView1.CurrentRow != null;
         }
     }
 }
